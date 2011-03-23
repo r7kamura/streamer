@@ -1,0 +1,5 @@
+streamerは、Web上の色々なものをstreamとして扱ってTerminalで流し続けるためのCUIアプリ。
+
+Webサービスごとにpluginを書いて適切な形式でstreamerにオブジェクトを渡すことで、いい感じにstreamを流します。
+
+という感じのものをつくります。
