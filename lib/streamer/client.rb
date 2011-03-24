@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 module Streamer
   module Client
     def item_queue
@@ -14,15 +13,28 @@ module Streamer
       @config ||= {}
     end
 
+    def init(&block)
+      inits << block
+    end
+
+    def inits
+      @inits ||= []
+    end
+
+    def _init
+      inits.each{|block| class_eval(&block)}
+    end
+
     def run
       @item_queue = []
+      _init
 
-      @ps = "X / _ / X < ".c(33)
+      @ps = "( ◕ ‿‿ ◕ ) ".c(33)
       EventMachine::run do
         Thread.start do
-          while buf = Readline.readline(@ps, true)
-            Readline::HISTORY.pop if buf.empty?
-            sync { input buf.strip }
+          while text = Readline.readline(@ps, true)
+            Readline::HISTORY.pop if text.empty?
+            sync { input text.strip }
           end
         end
 
@@ -34,7 +46,17 @@ module Streamer
             sleep 1
           end
         end
+
+        Thread.start do
+          loop do
+            item_queue << {:twitter => true, :text => "#{Time.now}"}
+            sleep 5
+          end
+        end
       end
+    end
+
+    def stream_2ch
     end
 
     def sync(&block)

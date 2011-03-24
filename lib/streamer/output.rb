@@ -1,12 +1,24 @@
 # encoding: UTF-8
 module Streamer
   module Output
-    def output
-      return if item_queue.empty?
-      insert do
-        while item = item_queue.shift
-          c = color_of(item)
-          puts item.u.c(c)
+    def outputs
+      @outputs ||= []
+    end
+
+    # register / execute
+    def output(&block)
+      if block
+        outputs << block
+      else
+        return if item_queue.empty?
+        insert do
+          while item = item_queue.shift
+            begin
+              outputs.each{|o| o.call(item)}
+            rescue => e
+              ap e
+            end
+          end
         end
       end
     end
@@ -15,8 +27,6 @@ module Streamer
       clear_line
       yield if block_given?
       print @ps
-    #ensure
-      #Readline.refresh_line
     end
 
     def clear_line
@@ -29,6 +39,18 @@ module Streamer
 
     def color_of(identifier)
       colors[identifier.to_i(36) % colors.size]
+    end
+  end
+
+  # 複数のoutputに分けてる理由はそんなにない
+  init do
+    output do |item|
+      next unless item[:twitter]
+      puts item[:text].c(33)
+    end
+    output do |item|
+      next unless item[:debug]
+      puts item[:text].c(34)
     end
   end
 

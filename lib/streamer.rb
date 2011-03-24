@@ -8,7 +8,8 @@ require "readline"
 
 module Streamer
   require "streamer/client"
+  require "streamer/commands"
+  require "streamer/ext"
   require "streamer/input"
   require "streamer/output"
-  require "streamer/ext"
 end
