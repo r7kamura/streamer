@@ -9,13 +9,17 @@ module Streamer
       @command_names ||= []
     end
 
+    def helps
+      @helps ||= []
+    end
+
     def input(text)
       begin
-      if command = command(text)
-        command[:block].call(command[:pattern].match(text))
-      elsif !text.empty?
-        puts "Command not found".c(43)
-      end
+        if command = command(text)
+          command[:block].call(command[:pattern].match(text))
+        elsif !text.empty?
+          puts "Command not found".c(31)
+        end
       rescue Exception => e
         ap e
       end
@@ -33,11 +37,23 @@ module Streamer
             pattern = %r|^#{command_name}$|
           end
         end
+        helps         << "%-10s %s" % [command_name, options[:help]] if options[:help] && command_name
         command_names << ":#{options[:as]}" if options[:as]
-        commands << {:pattern => pattern, :block => block}
+        commands      << {:pattern => pattern, :block => block}
       else
         commands.detect {|c| c[:pattern] =~ pattern}
       end
+    end
+
+    def input_stream
+      {
+        :interval   => 0,
+        :action_if  => lambda { @buf = Readline.readline(@ps, true) },
+        :action     => lambda {
+          Readline::HISTORY.pop if @buf.empty?
+          sync { input @buf.strip }
+        },
+      }
     end
   end
 

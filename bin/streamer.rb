@@ -5,4 +5,4 @@
 $:.unshift(File.dirname(__FILE__) + "/../lib")
 require "streamer"
 
-Streamer.run
+Streamer.start

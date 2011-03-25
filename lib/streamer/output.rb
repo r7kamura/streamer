@@ -40,17 +40,25 @@ module Streamer
     def color_of(identifier)
       colors[identifier.to_i(36) % colors.size]
     end
+
+    def output_stream
+      {
+        :interval   => 1,
+        :action_if  => lambda { Readline.line_buffer.nil? || Readline.line_buffer.empty? },
+        :action     => lambda { sync { output } },
+      }
+    end
   end
 
-  # 複数のoutputに分けてる理由はそんなにない
+  # 複数のoutputに分けてる理由はそんなにない気がするけど複数Hitするような場合に管理が楽
   init do
     output do |item|
       next unless item[:twitter]
-      puts item[:text].c(33)
+      puts "T: #{item[:text]}".c(31)
     end
     output do |item|
       next unless item[:debug]
-      puts item[:text].c(34)
+      puts "D: #{item[:text]}".c(32)
     end
   end
 

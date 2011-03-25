@@ -25,44 +25,50 @@ module Streamer
       inits.each{|block| class_eval(&block)}
     end
 
-    def run
-      @item_queue = []
-      _init
-
-      @ps = "( ◕ ‿‿ ◕ ) ".c(33)
-      EventMachine::run do
-        Thread.start do
-          while text = Readline.readline(@ps, true)
-            Readline::HISTORY.pop if text.empty?
-            sync { input text.strip }
-          end
-        end
-
-        Thread.start do
-          loop do
-            if Readline.line_buffer.nil? || Readline.line_buffer.empty?
-              sync { output }
-            end
-            sleep 1
-          end
-        end
-
-        Thread.start do
-          loop do
-            item_queue << {:twitter => true, :text => "#{Time.now}"}
-            sleep 5
-          end
-        end
-      end
-    end
-
-    def stream_2ch
-    end
-
     def sync(&block)
       mutex.synchronize do
         block.call
       end
+    end
+
+    def streams
+      @streams ||= []
+    end
+
+    def start
+      @item_queue = []
+      _init
+
+      @ps = "♪ ".c(33)
+      EventMachine::run do
+        every_minute_stream = {
+          :interval   => 1,
+          :action_if  => lambda { Time.now.to_i % 60 == 0 },
+          :action     => lambda { sync { item_queue << {:debug => true, :text => "#{Time.now}"} } },
+        } # For sample of stream
+        streams << input_stream
+        streams << output_stream
+        streams << every_minute_stream
+        streams.each do |stream|
+          Thread.start do
+            loop do
+              begin
+                if stream[:action_if].nil? || stream[:action_if].call
+                  stream[:action].call
+                  sleep stream[:interval]
+                end
+              rescue => e
+                ap e
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def stop
+      EventMachine.stop_event_loop
+      puts
     end
   end
 
