@@ -1,5 +1,6 @@
 # encoding: UTF-8
 module Streamer
+  # register default commands
   init do
     command :exit, :help => "exit streamer" do
       stop
@@ -22,6 +23,10 @@ module Streamer
 
     command :eval, :help => "exexute Ruby commands" do |m|
       ap eval(m[1])
+    end
+
+    command :stream, :help => "add stream" do |m|
+      ap m[1]
     end
   end
 end

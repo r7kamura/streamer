@@ -41,25 +41,27 @@ module Streamer
 
       @ps = "♪ ".c(33)
       EventMachine::run do
-        every_minute_stream = {
+        every_hour_stream = {
           :interval   => 1,
-          :action_if  => lambda { Time.now.to_i % 60 == 0 },
+          :action_if  => lambda { Time.now.to_i % 3600 == 0 },
           :action     => lambda { sync { item_queue << {:debug => true, :text => "#{Time.now}"} } },
         } # For sample of stream
         streams << input_stream
         streams << output_stream
-        streams << every_minute_stream
+        streams << every_hour_stream
+        streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301070713/")
         streams.each do |stream|
           Thread.start do
-            loop do
-              begin
+            begin
+              stream[:once].call if stream[:once]
+              loop do
                 if stream[:action_if].nil? || stream[:action_if].call
                   stream[:action].call
                   sleep stream[:interval]
                 end
-              rescue => e
-                ap e
               end
+            rescue => e
+              ap e.backtrace
             end
           end
         end

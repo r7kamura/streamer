@@ -50,15 +50,15 @@ module Streamer
     end
   end
 
-  # 複数のoutputに分けてる理由はそんなにない気がするけど複数Hitするような場合に管理が楽
   init do
     output do |item|
-      next unless item[:twitter]
-      puts "T: #{item[:text]}".c(31)
-    end
-    output do |item|
-      next unless item[:debug]
-      puts "D: #{item[:text]}".c(32)
+      if item[:twitter]
+        puts "T: #{item[:text]}".c(31)
+      elsif item[:debug]
+        puts "D: #{item[:text]}".c(32)
+      else
+        puts item[:text].gsub(/>>\d+/){|anchor| anchor.c(32)}
+      end
     end
   end
 

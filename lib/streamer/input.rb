@@ -37,7 +37,7 @@ module Streamer
             pattern = %r|^#{command_name}$|
           end
         end
-        helps         << "%-10s %s" % [command_name, options[:help]] if options[:help] && command_name
+        helps         << "%-20s %s" % [command_name, options[:help]] if options[:help] && command_name
         command_names << ":#{options[:as]}" if options[:as]
         commands      << {:pattern => pattern, :block => block}
       else
