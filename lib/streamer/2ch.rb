@@ -2,24 +2,32 @@
 module Streamer
   module NiChannel
     def stream_2ch(url)
-        {
-          :interval   => 10,
-          :once       => lambda {
-            @thread_data = ThreadData.new(url)
-            puts @thread_data.subject.c(33)
-          },
-          :action     => lambda { reload_thread },
-        }
+      {
+        :interval   => 10,
+        :once       => lambda {
+        @thread_data = ThreadData.new(url)
+        sync { item_queue << { :text => @thread_data.subject.c(33) } }
+      },
+        :action     => lambda { reload_thread },
+      }
     end
 
     def reload_thread
-      @thread_data.retrieve.last(10).each do |line|
-        sync {
-          item_queue << {
-            :ch => true,
-            :text => "%-4s: %s" % [line[:n].to_s.c(31), line.aa? ? "AA(ry" : line[:body].gsub("\n", " ")]
-          }
-        }
+      if @thread_data.length >= 1000
+        @thread_data.guess_next_thread.first(3).each do |thread|
+          sync { item_queue << {:text => "%s\n    %s" % [thread[:subject], thread[:uri]]} }
+        end
+      else
+        @thread_data.retrieve.last(10).each do |line|
+          if line.aa?
+            text = "AA(ry"
+          else
+            text = line[:body].gsub("\n", "").gsub(">>\d+"){|anchor| anchor.c(33)}
+          end
+          num  = line[:n].to_s.c(31)
+          text = "%-4s: %s" % [num, text]
+          sync { item_queue << { :ch => true, :text => text } }
+        end
       end
     end
   end
@@ -41,6 +49,7 @@ require 'net/http'
 require 'stringio'
 require 'zlib'
 require 'nkf'
+require 'kconv'
 $KCODE = "u" if RUBY_VERSION < "1.9" # json use this
 
 class ThreadData
@@ -187,28 +196,28 @@ class ThreadData
       uri = "http://#{@uri.host}/test/read.cgi/#{@board}/#{dat}/"
 
       subject, n = */(.+?) \((\d+)\)/.match(rest).captures
-      canonical_subject = canonicalize_subject(subject)
-      thread_rev     = canonical_subject[/\d+/].to_i
+                      canonical_subject = canonicalize_subject(subject)
+                      thread_rev     = canonical_subject[/\d+/].to_i
 
-      distance       = (dat     == self.dat)     ? Float::MAX :
-                       (subject == self.subject) ? 0 :
-                       levenshtein(canonical_subject.scan(/./u), current)
-      continuous_num = current_thread_rev.find {|rev| rev == thread_rev - 1 }
-      appear_recent  = recent_posted_threads[uri]
+                      distance       = (dat     == self.dat)     ? Float::MAX :
+                        (subject == self.subject) ? 0 :
+                        levenshtein(canonical_subject.scan(/./u), current)
+                      continuous_num = current_thread_rev.find {|rev| rev == thread_rev - 1 }
+                      appear_recent  = recent_posted_threads[uri]
 
-      score = distance
-      score -= 10 if continuous_num
-      score -= 10 if appear_recent
-      score += 10 if dat.to_i < self.dat.to_i
-      {
-        :uri            => uri,
-        :dat            => dat,
-        :subject        => subject,
-        :distance       => distance,
-        :continuous_num => continuous_num,
-        :appear_recent  => appear_recent,
-        :score          => score.to_f
-      }
+                      score = distance
+                      score -= 10 if continuous_num
+                      score -= 10 if appear_recent
+                      score += 10 if dat.to_i < self.dat.to_i
+                      {
+                        :uri            => uri,
+                        :dat            => dat,
+                        :subject        => subject,
+                        :distance       => distance,
+                        :continuous_num => continuous_num,
+                        :appear_recent  => appear_recent,
+                        :score          => score.to_f
+                      }
     }.sort_by {|o|
       o[:score]
     }

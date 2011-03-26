@@ -70,7 +70,6 @@ module Streamer
 
     def stop
       EventMachine.stop_event_loop
-      puts
     end
   end
 
