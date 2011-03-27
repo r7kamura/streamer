@@ -27,10 +27,9 @@ module Streamer
   end
 
   init do
-    #streams << hatebu_stream("r7kamura")
+    streams << hatebu_stream("r7kamura")
 
     command :hatebu, :help => "force to reload hatebu" do
-      #async { push_bookmarks }
       push_bookmarks
     end
   end

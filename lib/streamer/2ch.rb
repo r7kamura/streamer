@@ -4,10 +4,7 @@ module Streamer
     def stream_2ch(url)
       {
         :interval   => 5,
-        :once       => lambda {
-          @thread_data = ThreadData.new(url)
-          push_text(@thread_data.subject.c(33))
-        },
+        :once       => lambda { @thread_data = ThreadData.new(url) },
         :action     => lambda { load_thread },
       }
     end
@@ -52,7 +49,7 @@ module Streamer
 
     command :res, :help => "show 2ch post of specified number" do |m|
       line = @thread_data[m[1].to_i]
-      puts prettify_line(line, line.aa?)
+      puts prettify_line(line)
     end
 
     streams << stream_2ch('http://kamome.2ch.net/test/read.cgi/anime/1301250531/')
@@ -60,7 +57,6 @@ module Streamer
 
   extend NiChannel
 end
-
 
 
 require 'uri'
@@ -144,9 +140,6 @@ class ThreadData
     case res.code.to_i
     when 200, 206
       body = res.body
-      if res['Content-Encoding'] == 'gzip'
-        body = StringIO.open(body, 'rb') {|io| Zlib::GzipReader.new(io).read }
-      end
 
       @last_modified = res['Last-Modified']
       if res.code == '206'
