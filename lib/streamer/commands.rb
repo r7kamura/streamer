@@ -16,7 +16,7 @@ module Streamer
       puts helps.sort.join("\n")
     end
 
-    command :eval, :help => "exexute Ruby commands" do |m|
+    command :eval, :help => "execute Ruby command" do |m|
       begin
         ap eval(m[1])
       rescue Exception => e

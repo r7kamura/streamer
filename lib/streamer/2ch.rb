@@ -3,7 +3,7 @@ module Streamer
   module NiChannel
     def stream_2ch(url)
       {
-        :interval   => 5,
+        :interval   => 60,
         :once       => lambda { @thread_data = ThreadData.new(url) },
         :action     => lambda { load_thread },
       }
