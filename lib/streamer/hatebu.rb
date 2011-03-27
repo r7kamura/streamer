@@ -5,13 +5,13 @@ module Streamer
       {
         :interval   => 60 * 5,
         :once       => lambda { @hatebu_data = HatebuData.new(username) },
-        :action     => lambda { push_bookmarks(@hatebu_data.load) },
+        :action     => lambda { push_bookmarks },
       }
     end
 
-    def push_bookmarks(bookmarks)
+    def push_bookmarks
       sync {
-        bookmarks.each do |b|
+        @hatebu_data.retrieve.each do |b|
           item_queue << {
             :text => "%s %s %s %s\n  %s" % [
               Time.now.strftime("%H:%M"),
@@ -27,7 +27,12 @@ module Streamer
   end
 
   init do
-    streams << hatebu_stream("r7kamura")
+    #streams << hatebu_stream("r7kamura")
+
+    command :hatebu, :help => "force to reload hatebu" do
+      #async { push_bookmarks }
+      push_bookmarks
+    end
   end
 
   extend Hatebu
@@ -35,7 +40,7 @@ end
 
 require "mechanize"
 class HatebuData
-  attr_accessor :username
+  attr_accessor :username, :loaded_ids
 
   def initialize(username)
     @username = username
@@ -43,13 +48,14 @@ class HatebuData
     @loaded_ids = []
   end
 
-  def load
+  def retrieve
     begin
       page = @agent.get(URI.parse("http://b.hatena.ne.jp/#{@username}/favorite"))
-    rescue Net::HTTPNotFound => e
+      parse(page)
+    rescue => e
+      error e
       return
     end
-    parse(page)
   end
 
   def parse(page)

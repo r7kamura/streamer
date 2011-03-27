@@ -7,7 +7,7 @@ require "eventmachine"
 require "readline"
 
 module Streamer
-  require "streamer/client"
+  require "streamer/core"
   require "streamer/commands"
   require "streamer/ext"
   require "streamer/input"

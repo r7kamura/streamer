@@ -1,9 +1,7 @@
 # encoding: UTF-8
 module Streamer
   module Output
-    def outputs
-      @outputs ||= []
-    end
+    def outputs; @outputs ||= [] end
 
     # register / execute
     def output(&block)
@@ -16,7 +14,7 @@ module Streamer
             begin
               outputs.each{|o| o.call(item)}
             rescue => e
-              ap e
+              error e
             end
           end
         end
@@ -41,6 +39,10 @@ module Streamer
       colors[identifier.to_i(36) % colors.size]
     end
 
+    def push_text(text)
+      sync { item_queue << { :text => text } }
+    end
+
     def output_stream
       {
         :interval   => 1,
@@ -53,13 +55,7 @@ module Streamer
   init do
     streams << output_stream
 
-    output do |item|
-      if item[:debug]
-        puts "D: #{item[:text]}".c(32)
-      else
-        puts item[:text].gsub(/>>\d+/){|anchor| anchor.c(32)}
-      end
-    end
+    output{|item| puts item[:text]}
   end
 
   extend Output

@@ -1,21 +1,10 @@
 # encoding: UTF-8
 module Streamer
   module Input
-    def commands
-      @commands ||= []
-    end
-
-    def command_names
-      @command_names ||= []
-    end
-
-    def helps
-      @helps ||= []
-    end
-
-    def completions
-      @completions ||= []
-    end
+    def command_names;  @command_names  ||= [] end
+    def commands;       @commands       ||= [] end
+    def completions;    @completions    ||= [] end
+    def helps;          @helps          ||= [] end
 
     def completion(&block)
       completions << block
@@ -29,7 +18,7 @@ module Streamer
           puts "Command not found".c(31)
         end
       rescue Exception => e
-        ap e
+        error e
       end
     end
 
@@ -81,7 +70,7 @@ module Streamer
 
     completion do |text|
       if Readline.line_buffer =~ /^\s*#{Regexp.quote(text)}/
-        command_names.grep /^#{Regexp.quote(text)}/ # $~で代替した方がきっと速い
+        command_names.grep /^#{Regexp.quote(text)}/
       end
     end
   end

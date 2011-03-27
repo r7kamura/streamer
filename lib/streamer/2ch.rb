@@ -3,30 +3,37 @@ module Streamer
   module NiChannel
     def stream_2ch(url)
       {
-        :interval   => 60,
+        :interval   => 5,
         :once       => lambda {
-        @thread_data = ThreadData.new(url)
-        sync { item_queue << { :text => @thread_data.subject.c(33) } }
-      },
-        :action     => lambda { reload_thread },
+          @thread_data = ThreadData.new(url)
+          push_text(@thread_data.subject.c(33))
+        },
+        :action     => lambda { load_thread },
       }
     end
 
-    def reload_thread
+    def colorize_anchor(text)
+      text.gsub(/>>\d+/){|anchor| anchor.c(32)}
+    end
+
+    def prettify_line(line, is_aa=false)
+      text  = is_aa ? "AA(ry" : colorize_anchor(line[:body].gsub("\n", " "))
+      num   = line[:n].to_s.c(31)
+      "%-4s: %s" % [num, text]
+    end
+
+    def load_thread
       if @thread_data.length >= 1000
         @thread_data.guess_next_thread.first(3).each do |thread|
-          sync { item_queue << {:text => "%s\n    %s" % [thread[:subject], thread[:uri]]} }
+          push_text("%s\n    %s" % [thread[:subject], thread[:uri]])
         end
       else
-        @thread_data.retrieve.last(10).each do |line|
-          if line.aa?
-            text = "AA(ry"
-          else
-            text = line[:body].gsub("\n", " ").gsub(">>\d+"){|anchor| anchor.c(33)}
+        begin
+          @thread_data.retrieve.last(10).each do |line|
+            push_text(prettify_line(line, line.aa?))
           end
-          num  = line[:n].to_s.c(31)
-          text = "%-4s: %s" % [num, text]
-          sync { item_queue << { :ch => true, :text => text } }
+        rescue Exception => e
+          error e
         end
       end
     end
@@ -38,9 +45,18 @@ module Streamer
       puts "Now watching '#{m[1]}'"
     end
 
-    streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301203682/")
-  end
+    command :ch, :help => "force to load 2ch" do
+      puts "loading 2ch..."
+      load_thread
+    end
 
+    command :res, :help => "show 2ch post of specified number" do |m|
+      line = @thread_data[m[1].to_i]
+      puts prettify_line(line, line.aa?)
+    end
+
+    streams << stream_2ch('http://kamome.2ch.net/test/read.cgi/anime/1301250531/')
+  end
 
   extend NiChannel
 end
@@ -69,7 +85,6 @@ class ThreadData
       significants = body.scan(/[>\n0-9a-z０-９A-Zａ-ｚＡ-Ｚぁ-んァ-ン一-龠]/u).size.to_f
       body_length  = body.scan(/./u).size
       is_aa = 1 - significants / body_length
-
       is_aa > 0.6
     end
   end
@@ -93,9 +108,6 @@ class ThreadData
     l = @dat[n - 1]
     return nil unless l
     name, mail, misc, body, opts = * l.split(/<>/)
-    return nil unless misc
-    # TODO: lが文字コードの関係でbodyの一部しか読み込めてない.
-    # TODO: 番号ずれてる
     id = misc[/ID:([^\s]+)/, 1]
 
     body.gsub!(/<br>/, "\n")
@@ -112,22 +124,23 @@ class ThreadData
     @num
   end
 
-  def retrieve(force=false)
+  def request(force)
     @dat = [] if @force
-
-    res = Net::HTTP.start(@uri.host, @uri.port) do |http|
+    Net::HTTP.start(@uri.host, @uri.port) do |http|
       req = Net::HTTP::Get.new('/%s/dat/%d.dat' % [@board, @num])
-      req['User-Agent']        = 'Monazilla/1.00 (2ig.rb/0.0e)'
-      req['Accept-Encoding']   = 'gzip' unless @size
+      req['User-Agent']       = 'Monazilla/1.00 (2ig.rb/0.0e)'
+      req['Acceept-Encoding'] = @size ? 'identify' : 'gzip'
       unless force
         req['If-Modified-Since'] = @last_modified if @last_modified
         req['Range']             = "bytes=%d-" % @size if @size
       end
-
       http.request(req)
     end
+  end
 
-    ret = nil
+  def retrieve(force=false)
+    res = request(force)
+
     case res.code.to_i
     when 200, 206
       body = res.body
@@ -148,9 +161,7 @@ class ThreadData
       @dat.concat(body.split(/\n/))
       last = @dat.size
 
-      (curr..last).map {|n|
-        self[n]
-      }
+      (curr..last).map {|n| self[n]}
     when 416 # たぶん削除が発生
       p ['416']
       retrieve(true)

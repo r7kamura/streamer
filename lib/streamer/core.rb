@@ -1,24 +1,14 @@
 # -*- coding: utf-8 -*-
 module Streamer
-  module Client
-    def item_queue
-      @item_queue ||= []
-    end
-
-    def mutex
-      @mutex ||= Mutex.new
-    end
-
-    def config
-      @config ||= {}
-    end
+  module Core
+    def config;     @config     ||= {}        end
+    def inits;      @inits      ||= []        end
+    def item_queue; @item_queue ||= []        end
+    def streams;    @streams    ||= []        end
+    def mutex;      @mutex      ||= Mutex.new end
 
     def init(&block)
       inits << block
-    end
-
-    def inits
-      @inits ||= []
     end
 
     def _init
@@ -26,13 +16,11 @@ module Streamer
     end
 
     def sync(&block)
-      mutex.synchronize do
-        block.call
-      end
+      mutex.synchronize { block.call }
     end
 
-    def streams
-      @streams ||= []
+    def async(&block)
+      Thread.start(&block)
     end
 
     def start
@@ -51,7 +39,7 @@ module Streamer
                 end
               end
             rescue => e
-              error e.backtrace
+              error e
             end
           end
         end
@@ -62,11 +50,11 @@ module Streamer
       EventMachine.stop_event_loop
     end
 
-    def error
-      puts "[ERROR] #{e.message}\n#{e.backtrace.join("\n")}".c(33)
+    def error(e)
+      puts "[ERROR] #{e.message}\n#{e.backtrace.join("\n")}".c(31)
     end
   end
 
-  extend Client
+  extend Core
 end
 

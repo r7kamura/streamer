@@ -16,17 +16,12 @@ module Streamer
       puts helps.sort.join("\n")
     end
 
-    command :debug, :help => "show debug info" do
-      ap command_names
-      ap commands
-    end
-
     command :eval, :help => "exexute Ruby commands" do |m|
-      ap eval(m[1])
-    end
-
-    command :stream, :help => "add stream" do |m|
-      ap m[1]
+      begin
+        ap eval(m[1])
+      rescue Exception => e
+        error e
+      end
     end
   end
 end
