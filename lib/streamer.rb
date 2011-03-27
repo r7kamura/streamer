@@ -13,4 +13,5 @@ module Streamer
   require "streamer/input"
   require "streamer/output"
   require "streamer/2ch"
+  require "streamer/hatebu"
 end

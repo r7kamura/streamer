@@ -49,7 +49,6 @@ module Streamer
         streams << input_stream
         streams << output_stream
         streams << every_hour_stream
-        streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301070713/")
         streams.each do |stream|
           Thread.start do
             begin

@@ -37,7 +37,10 @@ module Streamer
       @thread_data = ThreadData.new(m[1])
       puts "Now watching '#{m[1]}'"
     end
+
+    #streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301070713/")
   end
+
 
   extend NiChannel
 end
