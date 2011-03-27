@@ -13,6 +13,14 @@ module Streamer
       @helps ||= []
     end
 
+    def completions
+      @completions ||= []
+    end
+
+    def completion(&block)
+      completions << block
+    end
+
     def input(text)
       begin
         if command = command(text)
@@ -54,6 +62,27 @@ module Streamer
           sync { input @buf.strip }
         },
       }
+    end
+  end
+
+  init do
+    streams << input_stream
+
+    Readline.completion_proc = lambda do |text|
+      completions.inject([]) do |results, completion|
+        begin
+          results + (completion.call(text) || [])
+        rescue Exception => e
+          error e
+          results
+        end
+      end
+    end
+
+    completion do |text|
+      if Readline.line_buffer =~ /^\s*#{Regexp.quote(text)}/
+        command_names.grep /^#{Regexp.quote(text)}/ # $~で代替した方がきっと速い
+      end
     end
   end
 

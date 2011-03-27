@@ -36,19 +36,10 @@ module Streamer
     end
 
     def start
-      @item_queue = []
       _init
 
       @ps = "♪ ".c(33)
       EventMachine::run do
-        every_hour_stream = {
-          :interval   => 1,
-          :action_if  => lambda { Time.now.to_i % 3600 == 0 },
-          :action     => lambda { sync { item_queue << {:debug => true, :text => "#{Time.now}"} } },
-        } # For sample of stream
-        streams << input_stream
-        streams << output_stream
-        streams << every_hour_stream
         streams.each do |stream|
           Thread.start do
             begin
@@ -60,7 +51,7 @@ module Streamer
                 end
               end
             rescue => e
-              ap e.backtrace
+              error e.backtrace
             end
           end
         end
@@ -69,6 +60,10 @@ module Streamer
 
     def stop
       EventMachine.stop_event_loop
+    end
+
+    def error
+      puts "[ERROR] #{e.message}\n#{e.backtrace.join("\n")}".c(33)
     end
   end
 

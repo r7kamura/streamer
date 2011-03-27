@@ -3,8 +3,7 @@ module Streamer
   module Hatebu
     def hatebu_stream(username)
       {
-        #:interval   => 60 * 5,
-        :interval   => 5,
+        :interval   => 60 * 5,
         :once       => lambda { @hatebu_data = HatebuData.new(username) },
         :action     => lambda { push_bookmarks(@hatebu_data.load) },
       }
@@ -36,7 +35,7 @@ end
 
 require "mechanize"
 class HatebuData
-  attr_accessor :username, :loaded_ids
+  attr_accessor :username
 
   def initialize(username)
     @username = username

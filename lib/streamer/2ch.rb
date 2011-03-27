@@ -3,7 +3,7 @@ module Streamer
   module NiChannel
     def stream_2ch(url)
       {
-        :interval   => 10,
+        :interval   => 60,
         :once       => lambda {
         @thread_data = ThreadData.new(url)
         sync { item_queue << { :text => @thread_data.subject.c(33) } }
@@ -22,7 +22,7 @@ module Streamer
           if line.aa?
             text = "AA(ry"
           else
-            text = line[:body].gsub("\n", "").gsub(">>\d+"){|anchor| anchor.c(33)}
+            text = line[:body].gsub("\n", " ").gsub(">>\d+"){|anchor| anchor.c(33)}
           end
           num  = line[:n].to_s.c(31)
           text = "%-4s: %s" % [num, text]
@@ -33,12 +33,12 @@ module Streamer
   end
 
   init do
-    command :change_thread, :help => "change watching URL of 2ch" do |m|
+    command :thread, :help => "change watching URL of 2ch" do |m|
       @thread_data = ThreadData.new(m[1])
       puts "Now watching '#{m[1]}'"
     end
 
-    #streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301070713/")
+    streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301203682/")
   end
 
 

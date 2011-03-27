@@ -51,10 +51,10 @@ module Streamer
   end
 
   init do
+    streams << output_stream
+
     output do |item|
-      if item[:twitter]
-        puts "T: #{item[:text]}".c(31)
-      elsif item[:debug]
+      if item[:debug]
         puts "D: #{item[:text]}".c(32)
       else
         puts item[:text].gsub(/>>\d+/){|anchor| anchor.c(32)}
