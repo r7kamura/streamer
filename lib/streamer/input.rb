@@ -52,6 +52,20 @@ module Streamer
         },
       }
     end
+
+    def confirm(message, type = :y)
+      message = message.c(36)
+      case type
+      when :y
+        print "#{message} [Yn] "
+        return !(gets.strip =~ /^n$/i)
+      when :n
+        print "#{message} [yN] "
+        return !!(gets.strip =~ /^y$/i)
+      else
+        raise "type must be :y or :n"
+      end
+    end
   end
 
   init do
