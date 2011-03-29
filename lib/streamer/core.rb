@@ -54,7 +54,7 @@ module Streamer
     end
 
     def error(e)
-      puts "[ERROR] #{e.message}\n#{e.backtrace.join("\n")}".c(31)
+      puts "[ERROR] #{e.class}\n#{e.message}\n#{e.backtrace.join("\n")}".c(31)
     end
 
     def load_config
