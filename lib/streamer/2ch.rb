@@ -1,4 +1,5 @@
 # encoding: UTF-8
+
 module Streamer
   module NiChannel
     def stream_2ch(url)
@@ -52,7 +53,11 @@ module Streamer
       puts prettify_line(line)
     end
 
-    streams << stream_2ch('http://kamome.2ch.net/test/read.cgi/anime/1301250531/')
+    command :post, :help => "post to 2ch" do |m|
+      @thread_data.post(m[1]) if confirm("upadte '#{m[1]}'")
+    end
+
+    streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301424017/")
   end
 
   extend NiChannel
@@ -68,10 +73,11 @@ require 'kconv'
 $KCODE = "u" if RUBY_VERSION < "1.9" # json use this
 
 class ThreadData
-  class UnknownThread < StandardError; end
+  class UnknownThread     < StandardError; end
+  class CookieException   < StandardError; end
+  class Post2chException  < StandardError; end
 
-  attr_accessor :uri
-  attr_accessor :last_modified, :size
+  attr_accessor :last_modified, :size, :uri
 
   Line = Struct.new(:n, :name, :mail, :misc, :body, :opts, :id) do
     def aa?
@@ -103,16 +109,15 @@ class ThreadData
   def [](n)
     l = @dat[n - 1]
     return nil unless l
+
     name, mail, misc, body, opts = * l.split(/<>/)
     id = misc[/ID:([^\s]+)/, 1]
-
     body.gsub!(/<br>/, "\n")
     body.gsub!(/<[^>]+>/, "")
     body.gsub!(/^\s+|\s+$/, "")
-    body.gsub!(/&(gt|lt|amp|nbsp);/) {|s|
+    body.gsub!(/&(gt|lt|amp|nbsp);/) do
       { 'gt' => ">", 'lt' => "<", 'amp' => "&", 'nbsp' => " " }[$1]
-    }
-
+    end
     Line.new(n, name, mail, misc, body, opts, id)
   end
 
@@ -136,37 +141,85 @@ class ThreadData
 
   def retrieve(force=false)
     res = request(force)
-
     case res.code.to_i
     when 200, 206
       body = res.body
-
       @last_modified = res['Last-Modified']
       if res.code == '206'
         @size += body.size
       else
         @size  = body.size
       end
-
       body = NKF.nkf('-w', body)
-
       curr = @dat.size + 1
       @dat.concat(body.split(/\n/))
       last = @dat.size
-
       (curr..last).map {|n| self[n]}
+    when 302 # dat 落ち
+      p ['302', res['Location']]
+      raise UnknownThread
+    when 304 # Not modified
+      []
     when 416 # たぶん削除が発生
       p ['416']
       retrieve(true)
       []
-    when 304 # Not modified
-      []
-    when 302 # dat 落ち
-      p ['302', res['Location']]
-      raise UnknownThread
     else
       p ['Unknown Status:', res.code]
       []
+    end
+  end
+
+  def post(text)
+    path = "/test/bbs.cgi"
+    request = Net::HTTP::Post.new(uri.path)
+    params = {
+      :submit  => NKF.nkf("-s", "書き込む"),
+      :FROM    => "",
+      :mail    => "sage",
+      :MESSAGE => NKF.nkf("-s", text),
+      :bbs     => @board,
+      :key     => @num,
+      :time    => Time.now.to_i
+    }.map{|k, v|"#{k}=#{v}"}.join("&")
+    header = {
+      "User-Agent"    => "Monazilla/1.00 (2ig.rb/0.0e)",
+      "X-2ch-UA"      => "Monazilla/1.00 (2ig.rb/0.0e)",
+      "Referer"       => "http://#{@uri.host}/#{@board}/index2.html",
+      "Content-Type"  => "application/x-www-form-urlencoded",
+      "Cookie"        => "NAME=;MAIL=sage"
+    }
+
+    try_count = 0
+    begin
+      try_count += 1
+      res = Net::HTTP.start(uri.host, uri.port) do |http|
+        http.post(path, params, header)
+      end
+
+      body = NKF.nkf('-w', res.body)
+      case res.code.to_i
+      when 200
+        if body =~ /書きこみました。/
+          puts "Posted => #{text}"
+        elsif body =~ /ＥＲＲＯＲ：修行が足りません\(Lv=(\d)\)。しばらくたってから投稿してください。\((\d+)\s*sec\)/
+          puts "PostLimit Lv#{$~[1]}: wait #{$~[2]}sec..."
+          sleep $~[2].to_i
+          raise CookieException
+        elsif try_count <= 2
+          header['Cookie'] += ';' + res['Set-Cookie']
+          params += "&kuno=ichi"
+          raise CookieException
+        else
+          raise Post2chException
+        end
+      else
+        raise Post2chException
+      end
+    rescue CookieException
+      retry
+    rescue Post2chException
+      puts "Failed(#{res.code})", body
     end
   end
 
