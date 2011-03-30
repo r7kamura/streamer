@@ -23,5 +23,9 @@ module Streamer
         error e
       end
     end
+
+    command :config, :help => "open config directory" do
+      system("open #{config[:dir]}")
+    end
   end
 end
