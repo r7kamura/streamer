@@ -24,7 +24,7 @@ module Streamer
     def insert
       clear_line
       yield if block_given?
-      print @ps
+      #print @ps
     end
 
     def clear_line

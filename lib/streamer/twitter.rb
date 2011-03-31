@@ -76,9 +76,9 @@ module Streamer
 
       info = []
       if item["in_reply_to_status_id"]
-        info << "(rp: #{obj2id(item["in_reply_to_status_id"])})"
+        info << "(Re:#{obj2id(item["in_reply_to_status_id"])})"
       elsif item["retweeted_status"]
-        info << "(rt: #{obj2id(item["retweeted_status"]["id"])})"
+        info << "(RT: #{obj2id(item["retweeted_status"]["id"])})"
       end
 
       text = item["text"].u

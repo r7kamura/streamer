@@ -16,8 +16,14 @@ module Streamer
 
     def prettify_line(line, is_aa=false)
       text  = is_aa ? "AA(ry" : colorize_anchor(line[:body].gsub("\n", " "))
-      num   = line[:n].to_s.c(31)
-      "%-4s: %s" % [num, text]
+      text.gsub!(URI.regexp(["ttp", "http", "https"])) {|i| i.c(4).c(36) }
+      num   = line[:n].to_s
+      [
+        Time.now.strftime("%H:%M"),
+        obj2id(num).c(90),
+        ("%-4s" % num) + ("%-14s" % line[:id]).c(90),
+        text,
+      ].join(" ")
     end
 
     def load_thread
@@ -57,7 +63,7 @@ module Streamer
       @thread_data.post(m[1]) if confirm("upadte '#{m[1]}'")
     end
 
-    streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301424017/")
+    streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301587310/")
   end
 
   extend NiChannel
@@ -91,10 +97,11 @@ class ThreadData
     end
   end
 
-  def initialize(thread_uri)
+  def initialize(thread_uri, cookie_file=nil)
     @uri = URI(thread_uri)
     _, _, _, @board, @num, = *@uri.path.split('/')
     @dat = []
+    @cookie_file = cookie_file if cookie_file
   end
 
   def length
@@ -129,7 +136,7 @@ class ThreadData
     @dat = [] if @force
     Net::HTTP.start(@uri.host, @uri.port) do |http|
       req = Net::HTTP::Get.new('/%s/dat/%d.dat' % [@board, @num])
-      req['User-Agent']       = 'Monazilla/1.00 (2ig.rb/0.0e)'
+      req['User-Agent']       = 'Monazilla/1.00 (2ch.rb/0.0e)'
       req['Acceept-Encoding'] = @size ? 'identify' : 'gzip'
       unless force
         req['If-Modified-Since'] = @last_modified if @last_modified
@@ -170,6 +177,10 @@ class ThreadData
     end
   end
 
+  def cookie
+    File.open(@cookie_file, "r"){|f| f.read} if @cookie_file
+  end
+
   def post(text)
     path = "/test/bbs.cgi"
     request = Net::HTTP::Post.new(uri.path)
@@ -183,11 +194,11 @@ class ThreadData
       :time    => Time.now.to_i
     }.map{|k, v|"#{k}=#{v}"}.join("&")
     header = {
-      "User-Agent"    => "Monazilla/1.00 (2ig.rb/0.0e)",
-      "X-2ch-UA"      => "Monazilla/1.00 (2ig.rb/0.0e)",
+      "User-Agent"    => "Monazilla/1.00 (2ch.rb/0.0e)",
+      "X-2ch-UA"      => "Monazilla/1.00 (2ch.rb/0.0e)",
       "Referer"       => "http://#{@uri.host}/#{@board}/index2.html",
       "Content-Type"  => "application/x-www-form-urlencoded",
-      "Cookie"        => "NAME=;MAIL=sage"
+      "Cookie"        => self.cookie || "NAME=;MAIL=sage"
     }
 
     try_count = 0
