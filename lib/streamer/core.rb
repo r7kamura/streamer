@@ -6,6 +6,15 @@ module Streamer
     def item_queue; @item_queue ||= []        end
     def streams;    @streams    ||= []        end
     def mutex;      @mutex      ||= Mutex.new end
+    def onces;      @once       ||= []        end
+
+    def once(&block)
+      onces << block
+    end
+
+    def _once
+      onces.each { |block| class_eval(&block) }
+    end
 
     def init(&block)
       inits << block
@@ -27,6 +36,7 @@ module Streamer
 
     def start
       _init
+      _once
 
       @ps = "♪ ".c(33)
       EventMachine::run do
@@ -54,20 +64,28 @@ module Streamer
     end
 
     def error(e)
-      puts "[ERROR] #{e.class}\n#{e.message}\n#{e.backtrace.join("\n")}".c(31)
+      case e.class.to_s
+      when "SocketError"
+        puts "[ERROR] Network error".c(31)
+      else
+        puts "[ERROR] #{e.class}\n#{e.message}\n#{e.backtrace.join("\n")}".c(31)
+      end
     end
 
     def load_config
-      config.merge!(
-        :dir             => File.expand_path('~/.streamer'),
-        :consumer_key    => 'RmzuwQ5g0SYObMfebIKJag',
-        :consumer_secret => 'V98dYYmWm9JoG7qfOF0jhJaVEVW3QhGYcDJ9JQSXU'
-      )
+      config[:dir]              ||= File.expand_path(ARGV[0] || '~/.streamer')
+      config[:plugin_dir]       ||= File.join(config[:dir], 'plugin')
+      config[:file]             ||= File.join(config[:dir], 'config')
 
-      FileUtils.mkdir_p(config[:dir]) unless File.exists?(config[:dir])
-      config[:file] ||= File.join(config[:dir], 'config')
-      File.open(config[:file], 'w') unless File.exists?(config[:file])
-      load config[:file]
+      [config[:dir], config[:plugin_dir]].each do |dir|
+        FileUtils.mkdir_p(dir) unless File.exists?(dir)
+      end
+
+      if File.exists?(config[:file])
+        load config[:file]
+      else
+        File.open(config[:file], 'w')
+      end
     end
 
     def store_history
