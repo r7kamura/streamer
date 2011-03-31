@@ -24,4 +24,5 @@ module Streamer
   require "streamer/hatebu"
   require "streamer/twitter"
   require "streamer/identifier"
+  require "streamer/cache"
 end
