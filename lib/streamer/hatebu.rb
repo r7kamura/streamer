@@ -13,13 +13,13 @@ module Streamer
       sync {
         @hatebu_data.retrieve.each do |b|
           item_queue << {
-            :text => "%s %s %s %s\n  %s" % [
+            :text => [
               Time.now.strftime("%H:%M"),
-              ("%-12s" % b[:user]).c(36),
+              obj2id(b[:link]).c(90),
+              ("%-12s" % b[:user][0..11]).c(36),
               ("%5s"   % b[:count]).to_s.c(31),
               b[:text],
-              b[:link].c(90),
-            ]
+            ].join(" ")
           }
         end
       }
@@ -31,6 +31,10 @@ module Streamer
 
     command :hatebu, :help => "force to reload hatebu" do
       push_bookmarks
+    end
+
+    command :open, :help => "open URI in the specified bookmark" do |m|
+      Launchy::Browser.run(id2obj(m[1]))
     end
   end
 

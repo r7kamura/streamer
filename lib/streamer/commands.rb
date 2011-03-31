@@ -28,7 +28,7 @@ module Streamer
       system("open #{config[:dir]}")
     end
 
-    command :'!' do |m|
+    command :'!', :help => "execute system command" do |m|
       system m[1]
     end
   end
