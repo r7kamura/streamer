@@ -1,4 +1,4 @@
-module Earthquake
+module Streamer
   module Cache
     attr_reader :cache
   end
