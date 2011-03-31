@@ -1,10 +1,18 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
-require "rubygems"
-require "awesome_print"
-require "eventmachine"
+require "active_support/cache"
+require "active_support/core_ext"
+require "ap"
+require "json"
+require "launchy"
+require "mechanize"
+require "notify"
+require "oauth"
 require "readline"
+require "thread"
+require "twitter/json_stream"
+require "twitter_oauth"
 
 module Streamer
   require "streamer/core"
@@ -14,4 +22,5 @@ module Streamer
   require "streamer/output"
   require "streamer/2ch"
   require "streamer/hatebu"
+  require "streamer/twitter"
 end
