@@ -16,7 +16,7 @@ module Streamer
             :text => [
               Time.now.strftime("%H:%M"),
               obj2id(b[:link]).c(90),
-              ("%-12s" % b[:user][0..11]).c(36),
+              ("%-12s" % b[:user][0..11]).c(color_of(b[:user])),
               ("%5s"   % b[:count]).to_s.c(31),
               b[:text],
             ].join(" ")

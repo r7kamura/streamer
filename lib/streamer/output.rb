@@ -55,7 +55,7 @@ module Streamer
   init do
     streams << output_stream
 
-    output{|item| puts item[:text]}
+    output {|item| puts item[:text] unless item[:text].nil? || item[:text].empty?  }
   end
 
   extend Output

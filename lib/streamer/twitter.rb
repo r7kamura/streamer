@@ -3,6 +3,33 @@ module Streamer
   module Twitter
     attr_reader :twitter
 
+    def connect_twitter
+      start_stream(:host  => 'userstream.twitter.com', :path  => '/2/user.json', :ssl => true)
+    end
+
+    def start_stream(options)
+      stop_stream
+
+      options = {
+        :oauth => config.slice(:consumer_key, :consumer_secret).merge(
+          :access_key     => config[:token],
+          :access_secret  => config[:secret],
+        )
+      }.merge(options)
+
+      EM.next_tick {
+        @stream = ::Twitter::JSONStream.connect(options)
+        @stream.each_item { |item| item_queue << JSON.parse(item).merge({:type => :twitter}) }
+        @stream.on_error { |message| puts "error: #{message}" }
+        @stream.on_reconnect { |timeout, retries| puts "reconnecting in: #{timeout} seconds" }
+        @stream.on_max_reconnects { |timeout, retries| notify "Failed after #{retries} failed reconnects" }
+      }
+    end
+
+    def stop_stream
+      @stream.stop if @stream
+    end
+
     def get_access_token
       puts "get access token..."
       consumer = OAuth::Consumer.new(
@@ -45,10 +72,32 @@ module Streamer
 
     output do |item|
       next if item["text"].nil? || item["_disable_cache"]
-      item = item.dup
-      item.keys.select { |key| key =~ /^_/ }.each { |key| item.delete(key) } # remote optional data like "_stream", "_highlights"
       Streamer.cache.write("status:#{item["id"]}", item)
+
+      info = []
+      if item["in_reply_to_status_id"]
+        info << "(rp: #{obj2id(item["in_reply_to_status_id"])})"
+      elsif item["retweeted_status"]
+        info << "(rt: #{obj2id(item["retweeted_status"]["id"])})"
+      end
+
+      text = item["text"].u
+      text.gsub!("\n", " ")
+      text.gsub!(/@([0-9A-Za-z_]+)/) {|i| i.c(color_of($1)) }
+      text.gsub!(/(?:^#([^\s]+))|(?:\s+#([^\s]+))/) {|i| i.c(color_of($1 || $2)) }
+      text.gsub!(URI.regexp(["http", "https"])) {|i| i.c(4).c(36) }
+      text += "[P]".c(31) if item["user"]["protected"]
+
+      puts [
+        Time.parse(item["created_at"]).strftime("%H:%M"),
+        obj2id(item["id"]).c(90),
+        ("%-18s" % item["user"]["screen_name"][0..17]).c(color_of(item["user"]["screen_name"])),
+        text,
+        info.join(' - ').c(90),
+      ].join(" ")
     end
+
+    connect_twitter
   end
 
   once do
