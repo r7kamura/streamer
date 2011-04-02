@@ -16,7 +16,7 @@ module Streamer
         return if item_queue.empty?
         insert do
           while item = item_queue.shift
-            puts_item(item)
+            puts_items(item)
           end
         end
       end
