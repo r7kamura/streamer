@@ -11,7 +11,8 @@ module Streamer
 
     def push_bookmarks
       sync {
-        @hatebu_data.retrieve.each do |b|
+        bookmarks = @hatebu_data.retrieve || return;
+        bookmarks.each do |b|
           item_queue << {
             :text => [
               Time.now.strftime("%H:%M"),
@@ -52,13 +53,8 @@ class HatebuData
   end
 
   def retrieve
-    begin
-      page = @agent.get(URI.parse("http://b.hatena.ne.jp/#{@username}/favorite"))
-      parse(page)
-    rescue => e
-      error e
-      return
-    end
+    page = @agent.get(URI.parse("http://b.hatena.ne.jp/#{@username}/favorite"))
+    parse(page)
   end
 
   def parse(page)
