@@ -64,18 +64,22 @@ module Streamer
     end
 
     def error(e)
+      message = "[ERROR] "
       case e.class.to_s
-      when "SocketError"
-        puts "[ERROR] Network error".c(31)
+      when "SocketError", "EventMachine::ConnectionError"
+        message += "NetworkError (#{e.class})"
+      when "ThreadError"
+        message += "ThreadError (#{e.class})"
       else
-        puts "[ERROR] #{e.class}\n#{e.message}\n#{e.backtrace.join("\n")}".c(31)
+        message += "#{e.class}\n#{e.message}\n#{e.backtrace.join("\n")}"
       end
+      puts message.c(31)
     end
 
     def load_config
-      config[:dir]              ||= File.expand_path(ARGV[0] || '~/.streamer')
-      config[:plugin_dir]       ||= File.join(config[:dir], 'plugin')
-      config[:file]             ||= File.join(config[:dir], 'config')
+      config[:dir]        ||= File.expand_path(ARGV[0] || '~/.streamer')
+      config[:plugin_dir] ||= File.join(config[:dir], 'plugin')
+      config[:file]       ||= File.join(config[:dir], 'config')
 
       [config[:dir], config[:plugin_dir]].each do |dir|
         FileUtils.mkdir_p(dir) unless File.exists?(dir)
