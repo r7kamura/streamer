@@ -18,11 +18,15 @@ module Streamer
       }.merge(options)
 
       EM.next_tick {
-        @stream = ::Twitter::JSONStream.connect(options)
-        @stream.each_item { |item| item_queue << JSON.parse(item).merge({:type => :twitter}) }
-        @stream.on_error { |message| puts "error: #{message}" }
-        @stream.on_reconnect { |timeout, retries| puts "reconnecting in: #{timeout} seconds" }
-        @stream.on_max_reconnects { |timeout, retries| notify "Failed after #{retries} failed reconnects" }
+        begin
+          @stream = ::Twitter::JSONStream.connect(options)
+          @stream.each_item { |item| item_queue << JSON.parse(item).merge({:type => :twitter}) }
+          @stream.on_error { |message| puts "error: #{message}" }
+          @stream.on_reconnect { |timeout, retries| puts "reconnecting in: #{timeout} seconds" }
+          @stream.on_max_reconnects { |timeout, retries| notify "Failed after #{retries} failed reconnects" }
+        rescue EventMachine::ConnectionError => e
+          error e
+        end
       }
     end
 
@@ -95,6 +99,30 @@ module Streamer
         text,
         info.join(' - ').c(90),
       ].join(" ")
+    end
+
+    output do |item|
+      next unless item["event"]
+
+      result = [
+        Time.now.strftime("%H:%M"),
+        " "*3,
+        ("%-18s" % item["source"]["screen_name"][0..17]).c(color_of(item["source"]["screen_name"])),
+      ]
+      case item["event"]
+      when "follow", "block", "unblock"
+        result << "[#{item["event"]}]".c(42) + "  => #{item["target"]["screen_name"]}"
+      when "favorite", "unfavorite"
+        result << "[#{item["event"]}]".c(42) + "  => #{item["target"]["screen_name"]} : #{item["target_object"]["text"].u}"
+      when "delete"
+        result << "[deleted]".c(42) + " #{item["delete"]["status"]["id"]}"
+      end
+
+      puts result.join(" ")
+    end
+
+    command :recent do
+      puts_items twitter.home_timeline
     end
 
     connect_twitter
