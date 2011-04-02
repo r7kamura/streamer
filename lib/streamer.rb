@@ -26,3 +26,5 @@ module Streamer
   require "streamer/identifier"
   require "streamer/cache"
 end
+
+Thread.abort_on_exception = true
