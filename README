@@ -1,5 +1,5 @@
-streamerは、Web上の色々なものをstreamとして扱ってTerminalで流し続けるためのCUIアプリ。
+ストリームっぽいもの全般を何でもTerminalで流そうよというCUIアプリです。
+jugyoさんの作られたTwitterクライアントEarthquake.gemを改造してつくりました。
 
-Webサービスごとにpluginを書いて適切な形式でstreamerにオブジェクトを渡すことで、いい感じにstreamを流します。
-
-という感じのものをつくります。
+ストリームっぽいものの例としては、twitterや、2chや、ソーシャルブックマーク、
+各種ログ、IRC、Email、RSSなどを想定しています。
