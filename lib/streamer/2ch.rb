@@ -63,7 +63,7 @@ module Streamer
       @thread_data.post(m[1]) if confirm("upadte '#{m[1]}'")
     end
 
-    streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301587310/")
+    #streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301730633/")
   end
 
   extend NiChannel
