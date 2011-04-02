@@ -1,7 +1,12 @@
 # encoding: UTF-8
 module Streamer
   module Output
-    def outputs; @outputs ||= [] end
+    def outputs;        @outputs        ||= [] end
+    def output_filters; @output_filters ||= [] end
+
+    def output_filter(&block)
+      output_filters << block
+    end
 
     # register / execute
     def output(&block)
@@ -11,11 +16,20 @@ module Streamer
         return if item_queue.empty?
         insert do
           while item = item_queue.shift
-            begin
-              outputs.each{|o| o.call(item)}
-            rescue => e
-              error e
-            end
+            puts_item(item)
+          end
+        end
+      end
+    end
+
+    def puts_items(items)
+      [items].flatten.reverse_each do |item|
+        next if output_filters.any? { |f| f.call(item) == false }
+        outputs.each do |o|
+          begin
+            o.call(item)
+          rescue => e
+            error e
           end
         end
       end
@@ -24,7 +38,6 @@ module Streamer
     def insert
       clear_line
       yield if block_given?
-      #print @ps
     end
 
     def clear_line
