@@ -44,6 +44,9 @@ module Streamer
   end
 
   init do
+    next unless config[:channel]
+    streams << stream_2ch(config[:channel])
+
     command :thread, :help => "change watching URL of 2ch" do |m|
       @thread_data = ThreadData.new(m[1])
       puts "Now watching '#{m[1]}'"
@@ -62,11 +65,10 @@ module Streamer
     command :post, :help => "post to 2ch" do |m|
       @thread_data.post(m[1]) if confirm("upadte '#{m[1]}'")
     end
-
-    #streams << stream_2ch("http://kamome.2ch.net/test/read.cgi/anime/1301730633/")
   end
 
   extend NiChannel
+  argv << [:c, :channel, "Add 2ch stream with specified URL", :optional => true]
 end
 
 

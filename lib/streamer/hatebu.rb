@@ -28,7 +28,9 @@ module Streamer
   end
 
   init do
-    streams << hatebu_stream("r7kamura")
+    next unless config[:bookmark]
+
+    streams << hatebu_stream(config[:bookmark].to_s)
 
     command :hatebu, :help => "force to reload hatebu" do
       push_bookmarks
@@ -40,6 +42,7 @@ module Streamer
   end
 
   extend Hatebu
+  argv << [:b, :bookmark, "Add HatenaBookmark stream with specified HatenaID", :optional => true]
 end
 
 require "mechanize"

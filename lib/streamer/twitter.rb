@@ -24,6 +24,7 @@ module Streamer
           @stream.on_error { |message| puts "error: #{message}" }
           @stream.on_reconnect { |timeout, retries| puts "reconnecting in: #{timeout} seconds" }
           @stream.on_max_reconnects { |timeout, retries| notify "Failed after #{retries} failed reconnects" }
+          puts_items twitter.home_timeline
         rescue EventMachine::ConnectionError => e
           error e
         end
@@ -78,10 +79,13 @@ module Streamer
   end
 
   init do
+    next unless config[:twitter]
+
     config[:consumer_key]     ||= 'grQ0RQoR0hjUtLrVPdHdw'
     config[:consumer_secret]  ||= 'qAw9xeOlBEfPdjYEc278otBMCwPLW0bbPxUDChI'
     @twitter = TwitterOAuth::Client.new(config.slice(:consumer_key, :consumer_secret, :token, :secret))
     get_access_token unless self.config[:token] && self.config[:secret]
+    connect_twitter
 
     output do |item|
       next if item["text"].nil?
@@ -172,14 +176,14 @@ module Streamer
 
     command %r|^:retweet\s+(\d+)$|, :as => :retweet do |m|
       target = twitter.status(m[1])
-      if confirm("retweet 'RT @#{target["user"]["screen_name"]}: #{target["text"].e}'")
+      if confirm("retweet 'RT @#{target["user"]["screen_name"]}: #{target["text"]}'")
         async { twitter.retweet(m[1]) }
       end
     end
 
     command %r|^:retweet\s+(\d+)\s+(.*)$|, :as => :retweet do |m|
       target = twitter.status(m[1])
-      text = "#{m[2]} RT @#{target["user"]["screen_name"]}: #{target["text"].e} (#{target["id"]})"
+      text = "#{m[2]} RT @#{target["user"]["screen_name"]}: #{target["text"]} (#{target["id"]})"
       if confirm("unofficial retweet '#{text}'")
         async { twitter.update(text) }
       end
@@ -237,8 +241,6 @@ module Streamer
         tweet["_indent"] = "  " * indent
       end
     end
-
-    connect_twitter
   end
 
   once do
@@ -260,6 +262,7 @@ module Streamer
   end
 
   extend Twitter
+  argv << [:t, :twitter, "Add twitter stream"]
 end
 
 

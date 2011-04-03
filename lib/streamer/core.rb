@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 module Streamer
   module Core
+    def argv;       @argv       ||= []        end
     def config;     @config     ||= {}        end
     def inits;      @inits      ||= []        end
     def item_queue; @item_queue ||= []        end
@@ -34,7 +35,8 @@ module Streamer
       Thread.start(&block)
     end
 
-    def start
+    def start(options = {})
+      config.merge!(options)
       _init
       _once
 
@@ -64,16 +66,17 @@ module Streamer
     end
 
     def error(e)
-      message = "[ERROR] "
+      message = ["[ERROR]"]
       case e.class.to_s
       when "SocketError", "EventMachine::ConnectionError"
-        message += "NetworkError (#{e.class})"
+        message << "NetworkError (#{e.class})"
       when "ThreadError"
-        message += "ThreadError (#{e.class})"
+        message << "ThreadError (#{e.class})"
       else
-        message += "#{e.class}\n#{e.message}\n#{e.backtrace.join("\n")}"
+        message << "%s => %s" % [e.class, e.message]
+        message << e.backtrace.join("\n") if config[:debug]
       end
-      puts message.c(31)
+      puts message.compact.join("\n").c(31)
     end
 
     def load_config
@@ -109,5 +112,6 @@ module Streamer
   end
 
   extend Core
+  argv << [:d, :debug, "Enable Debug Mode"]
 end
 

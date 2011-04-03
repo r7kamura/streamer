@@ -1,8 +1,15 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
-# vim:filetype=ruby
 
-$:.unshift(File.dirname(__FILE__) + "/../lib")
+$:.unshift(File.expand_path("../../lib", __FILE__)) if $0 == __FILE__
+require 'slop'
 require "streamer"
 
-Streamer.start
+opts = Slop.parse! :help => true do
+  banner "Usage: streamer [options]"
+  Streamer.argv.each { |arg| on(*arg) }
+end
+
+options = opts.to_hash(true)
+options.delete(:help)
+
+Streamer.start(options)
