@@ -5,18 +5,26 @@ module Streamer
     def commands;       @commands       ||= [] end
     def completions;    @completions    ||= [] end
     def helps;          @helps          ||= [] end
+    def input_filters;  @input_filters  ||= [] end
+
+    def input_filter(&block)
+      input_filters << block
+    end
 
     def completion(&block)
       completions << block
     end
 
     def input(text)
+      return if text.empty?
       begin
+        input_filters.each { |f| text = f.call(text) }
         if command = command(text)
           command[:block].call(command[:pattern].match(text))
         elsif !text.empty?
           puts "Command not found".c(31)
         end
+        store_history
       rescue Exception => e
         error e
       end
@@ -83,8 +91,19 @@ module Streamer
     end
 
     completion do |text|
-      if Readline.line_buffer =~ /^\s*#{Regexp.quote(text)}/
-        command_names.grep /^#{Regexp.quote(text)}/
+      regexp = /^#{Regexp.quote(text)}/
+      results = []
+      results += command_names.grep(regexp)
+      range = Readline::HISTORY.count >= 100 ? -100..-1 : 0..-1
+      results += Readline::HISTORY.to_a[range].map { |line| line.split(/\s+/) }.flatten.grep(regexp)
+      results
+    end
+
+    input_filter do |text|
+      if text =~ %r|^:|
+        text.gsub(/\$\w+/) { |id| id2obj(id) || id }
+      else
+        text
       end
     end
   end
