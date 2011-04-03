@@ -35,9 +35,12 @@ module Streamer
       end
     end
 
-    def insert
+    def insert(*messages)
       clear_line
+      puts messages unless messages.empty?
       yield if block_given?
+    ensure
+      Readline.refresh_line
     end
 
     def clear_line
