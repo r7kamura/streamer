@@ -68,7 +68,7 @@ module Streamer
       end
     end
 
-    def async_twitter
+    def async_twitter(&block)
       async { handle_api_error(&block) }
     end
 
@@ -139,7 +139,7 @@ module Streamer
     end
 
     command :tw, :help => "tweet (ex => 'tw hello world now!!')" do |m|
-      async { twitter.update(m[1]) } if confirm("update '#{m[1]}'")
+      async_twitter { twitter.update(m[1]) } if confirm("update '#{m[1]}'")
     end
 
     command :mentions, :help => "show tweets menioned(replyed) to me" do
@@ -147,11 +147,11 @@ module Streamer
     end
 
     command :follow, :help => "follow specified twitter user" do |m|
-      async { twitter.friend(m[1]) }
+      async_twitter { twitter.friend(m[1]) }
     end
 
     command :unfollow, :help => "unfollow specified twitter user" do |m|
-      async { twitter.unfriend(m[1]) }
+      async_twitter { twitter.unfriend(m[1]) }
     end
 
     command :user do |m|
@@ -177,7 +177,7 @@ module Streamer
     command %r|^:retweet\s+(\d+)$|, :as => :retweet do |m|
       target = twitter.status(m[1])
       if confirm("retweet 'RT @#{target["user"]["screen_name"]}: #{target["text"]}'")
-        async { twitter.retweet(m[1]) }
+        async_twitter { twitter.retweet(m[1]) }
       end
     end
 
@@ -185,16 +185,16 @@ module Streamer
       target = twitter.status(m[1])
       text = "#{m[2]} RT @#{target["user"]["screen_name"]}: #{target["text"]} (#{target["id"]})"
       if confirm("unofficial retweet '#{text}'")
-        async { twitter.update(text) }
+        async_twitter { twitter.update(text) }
       end
     end
 
     command :favorite do |m|
-      async { twitter.favorite(m[1]) }
+      async_twitter { twitter.favorite(m[1]) }
     end
 
     command :unfavorite do |m|
-      async { twitter.unfavorite(m[1]) }
+      async_twitter { twitter.unfavorite(m[1]) }
     end
 
     command :retweeted_by_me do
@@ -210,15 +210,15 @@ module Streamer
     end
 
     command :block do |m|
-      async { twitter.block(m[1]) }
+      async_twitter { twitter.block(m[1]) }
     end
 
     command :unblock do |m|
-      async { twitter.unblock(m[1]) }
+      async_twitter { twitter.unblock(m[1]) }
     end
 
     command :report_spam do |m|
-      async { twitter.report_spam(m[1]) }
+      async_twitter { twitter.report_spam(m[1]) }
     end
 
     command :messages do
@@ -229,17 +229,17 @@ module Streamer
     end
 
     command %r|^:message (\w+)\s+(.*)|, :as => :message do |m|
-      async { twitter.message(*m[1, 2]) } if confirm("message '#{m[2]}' to @#{m[1]}")
+      async_twitter { twitter.message(*m[1, 2]) } if confirm("message '#{m[2]}' to @#{m[1]}")
     end
 
     command :tree, :help => "show tweets tree by replies" do |m|
-      tree = [twitter.status(id2obj(m[1]))]
+      tree = [twitter.status(m[1])]
       while reply = tree.last["in_reply_to_status_id"]
         tree << twitter.status(reply)
       end
-      puts_items tree.reverse_each.with_index do |tweet, indent|
+      puts_items tree.reverse_each.with_index {|tweet, indent|
         tweet["_indent"] = "  " * indent
-      end
+      }
     end
   end
 
