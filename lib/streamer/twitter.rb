@@ -39,12 +39,12 @@ module Streamer
       consumer = OAuth::Consumer.new(
         self.config[:consumer_key],
         self.config[:consumer_secret],
-        :site => 'http://api.twitter.com'
+        :site => 'https://api.twitter.com'
       )
       request_token = consumer.get_request_token
 
       puts "1) open: #{request_token.authorize_url}"
-      Launchy::Browser.run(request_token.authorize_url)
+      Launchy::Browser.run(request_token.authorize_url) rescue nil
 
       begin
         print "2) Enter the PIN: "
@@ -66,6 +66,15 @@ module Streamer
         f << "Streamer.config[:secret] = '#{config[:secret]}'"
       end
     end
+
+    def async_twitter
+      async { handle_api_error(&block) }
+    end
+
+    def handle_api_error(&block)
+      result = block.call
+      puts "[ERROR] #{result["error"]}".c(31) if result["error"]
+    end
   end
 
   init do
@@ -75,8 +84,7 @@ module Streamer
     get_access_token unless self.config[:token] && self.config[:secret]
 
     output do |item|
-      next if item["text"].nil? || item["_disable_cache"]
-      Streamer.cache.write("status:#{item["id"]}", item)
+      next if item["text"].nil?
 
       info = []
       if item["in_reply_to_status_id"]
@@ -91,6 +99,7 @@ module Streamer
       text.gsub!(/(?:^#([^\s]+))|(?:\s+#([^\s]+))/) {|i| i.c(color_of($1 || $2)) }
       text.gsub!(URI.regexp(["http", "https"])) {|i| i.c(4).c(36) }
       text += "[P]".c(31) if item["user"]["protected"]
+      text = item["_indent"] + text if item["_indent"]
 
       puts [
         Time.parse(item["created_at"]).strftime("%H:%M"),
@@ -219,6 +228,16 @@ module Streamer
       async { twitter.message(*m[1, 2]) } if confirm("message '#{m[2]}' to @#{m[1]}")
     end
 
+    command :tree, :help => "show tweets tree by replies" do |m|
+      tree = [twitter.status(id2obj(m[1]))]
+      while reply = tree.last["in_reply_to_status_id"]
+        tree << twitter.status(reply)
+      end
+      puts_items tree.reverse_each.with_index do |tweet, indent|
+        tweet["_indent"] = "  " * indent
+      end
+    end
+
     connect_twitter
   end
 
@@ -241,4 +260,18 @@ module Streamer
   end
 
   extend Twitter
+end
+
+
+module TwitterOAuth
+  class Client
+    private
+    def consumer
+      @consumer ||= OAuth::Consumer.new(
+        @consumer_key,
+        @consumer_secret,
+        { :site => 'https://api.twitter.com', :proxy => @proxy }
+      )
+    end
+  end
 end

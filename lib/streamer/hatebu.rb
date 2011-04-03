@@ -35,7 +35,7 @@ module Streamer
     end
 
     command :open, :help => "open URI in the specified bookmark" do |m|
-      Launchy::Browser.run(id2obj(m[1]))
+      Launchy::Browser.run(m[1])
     end
   end
 
