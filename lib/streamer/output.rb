@@ -43,6 +43,11 @@ module Streamer
       Readline.refresh_line
     end
 
+    def notify(message, options = {:title => self.to_s})
+      message = message.is_a?(String) ? message : message.inspect
+      Notify.notify options[:title], message
+    end
+
     def clear_line
       print "\e[0G" + "\e[K"
     end
@@ -71,7 +76,10 @@ module Streamer
   init do
     streams << output_stream
 
-    output {|item| puts item[:text] unless item[:text].nil? || item[:text].empty?  }
+    output do |item|
+      next if item[:text].nil? || item[:text].empty?
+      puts item[:text]
+    end
   end
 
   extend Output
