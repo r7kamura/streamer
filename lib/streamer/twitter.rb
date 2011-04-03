@@ -131,7 +131,9 @@ module Streamer
         result << "[deleted]".c(42) + " #{item["delete"]["status"]["id"]}"
       end
 
-      puts result.join(" ")
+      text = result.join(" ")
+      puts text
+      notify(item["target"]["screen_name"], {:title => item["event"]})
     end
 
     command :recent, :help => "show recent tweets" do
