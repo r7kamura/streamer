@@ -53,7 +53,7 @@ module Streamer
     def input_stream
       {
         :interval   => 0,
-        :action_if  => lambda { @buf = Readline.readline(@ps, true) },
+        :action_if  => lambda { @buf = Readline.readline("", true) },
         :action     => lambda {
           Readline::HISTORY.pop if @buf.empty?
           sync { input @buf.strip }

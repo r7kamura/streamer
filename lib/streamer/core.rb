@@ -40,7 +40,6 @@ module Streamer
       _init
       _once
 
-      @ps = "♪ ".c(33)
       EventMachine::run do
         streams.each do |stream|
           Thread.start do
