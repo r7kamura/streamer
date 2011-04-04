@@ -1,9 +1,70 @@
+** 概要
 ストリームっぽいもの全般を何でもTerminalで流そうよというCUIアプリです。
 jugyoさんの作られたTwitterクライアントEarthquake.gemを改造してつくりました。
-
 ストリームっぽいものの例としては、twitterや、2chや、ソーシャルブックマーク、
 各種ログ、IRC、Email、RSSなどを想定しています。
 
 スクリーンショット
 http://gyazo.com/d714171f8e434a95256b5fe0d565b16b.png
 
+
+
+** インストール
+Ruby 1.9以上を利用して下さい。
+rvmを利用している方は日本語表示の為にreadlineオプションを有効化してrubyを入れる必要があります。
+Gemでは提供していないので適当なディレクトリに置いて起動してください。
+  $ git clone http://github.com/r7kamura/streamer
+  $ cd streamer
+  $ bundle install
+
+
+
+** 使い方
+オプションを渡して使いたいモードを指定しながら起動します。
+
+help(-h, --help)
+  $ ./bin/streamer.rb -h
+
+twitter(-t, --twitter)
+  $ ./bin/streamer.rb -t
+
+hatena-bookmark(-b username, --bookmark=username)
+  $ ./bin/streamer.rb -b r7kamura
+
+2ch(-c url, --channel=thread_url)
+  $ ./bin/streamer.rb -c http://kamome.2ch.net/test/read.cgi/anime/1301907984/
+
+all
+  $ ./bin/streamer.rb -t -b r7kamura -h http://kamome.2ch.net/test/read.cgi/anime/1301907984/
+
+起動後は最近の数件を出力した後、更新がある度に画面に出力されていきます。
+:(コロン)で始まるコマンドが利用できます。
+:helpと入力することで、使えるコマンド一覧が拙い説明とともに表示されます。
+Tabキーを押すとコマンドが補完されます。
+そのモードで元から用意されているコマンドと最近入力したコマンドが補完対象になります。
+
+
+
+** 開発者向け
+自分でストリームっぽいものを取得するスクリプトを書けば、好きなものを画面上に流すことが出来ます。
+lib/streamer/hatebu.rb等を参考にして、lib/streamer/辺りにファイルを作ってください。
+lib/streamer.rbでrequireし、initブロックの中でstreamsにProc等を定義した適切なHashをPushすれば上手く行くと思います。
+なお、active_supportとlib/streamer/ext.rbにより一部クラスの拡張が行われているためご注意下さい。
+便利なものを作られた方はpull requestを送っていただければ作者が喜びます。
+
+
+
+** 謝辞
+http://github.com/jugyo/earthquake
+jugyoさんのearthquake.gemをほぼ丸ごと利用させていただきました。ありがとうございます。
+
+http://github.com/cho45/net-irc
+cho45さんのnet-ircからexamples/2ch.rbのThreadDataを利用させていただきました。ありがとうございます。
+
+その他各種ライブラリを利用し、多くのドキュメント・エントリを参考にしています。開発者の方ありがとうございます。
+
+
+** 作者
+twitter => http://twitter.com/7kamura ---> 質問/要望はこちらにお願いします
+hatena  => http://d.hatena.ne.jp/r7kamura
+github  => http://github.com/r7kamura
