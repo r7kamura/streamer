@@ -13,7 +13,7 @@ http://gyazo.com/d714171f8e434a95256b5fe0d565b16b.png
 Ruby 1.9以上を利用して下さい。
 rvmを利用している方は日本語表示の為にreadlineオプションを有効化してrubyを入れる必要があります。
 Gemでは提供していないので適当なディレクトリに置いて起動してください。
-  $ git clone http://github.com/r7kamura/streamer
+  $ git clone git://github.com/r7kamura/streamer.git
   $ cd streamer
   $ bundle install
 
