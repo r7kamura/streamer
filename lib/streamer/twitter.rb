@@ -195,6 +195,16 @@ module Streamer
       end
     end
 
+    command %r|^:reply (\d+)\s+(.*)|, :as => :reply do |m|
+      in_reply_to_status_id = m[1]
+      target = twitter.status(in_reply_to_status_id)
+      screen_name = target["user"]["screen_name"]
+      text = "@#{screen_name} #{m[2]}"
+      if confirm(["'@#{screen_name}: #{target["text"]}'", "reply '#{text}'"].join("\n"))
+        async_twitter { twitter.update(text, :in_reply_to_status_id => in_reply_to_status_id) }
+      end
+    end
+
     command :favorite do |m|
       async_twitter { twitter.favorite(m[1]) }
     end
@@ -232,6 +242,11 @@ module Streamer
         s["user"] = {"screen_name" => s["sender_screen_name"]}
         s["_disable_cache"] = true
       }
+    end
+
+    command :delete do |m|
+      tweet = twitter.status(m[1])
+      async_twitter { twitter.status_destroy(m[1]) } if confirm("delete '#{tweet["text"]}'")
     end
 
     command %r|^:message (\w+)\s+(.*)|, :as => :message do |m|
