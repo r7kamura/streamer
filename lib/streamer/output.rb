@@ -3,6 +3,7 @@ module Streamer
   module Output
     def outputs;        @outputs        ||= [] end
     def output_filters; @output_filters ||= [] end
+    def notify_filters; @notify_filters ||= [] end
 
     def output_filter(&block)
       output_filters << block

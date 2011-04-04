@@ -112,6 +112,10 @@ module Streamer
         text,
         info.join(' - ').c(90),
       ].join(" ")
+
+      notify_filters.each do |word|
+        notify(item["text"], {:title => item["user"]["screen_name"]}) if item["text"].include?(word)
+      end
     end
 
     output do |item|
@@ -242,6 +246,15 @@ module Streamer
       puts_items tree.reverse_each.with_index {|tweet, indent|
         tweet["_indent"] = "  " * indent
       }
+    end
+
+    command :notify, :help => "add word to notify_filter (notify when tweet includes the word)" do |m|
+      notify_filters << m[1]
+      ap notify_filters
+    end
+
+    command :notify_filters, :help => "show notify_filters" do
+      ap notify_filters
     end
   end
 
