@@ -137,7 +137,7 @@ module Streamer
 
       text = result.join(" ")
       puts text
-      notify(item["target"]["screen_name"], {:title => item["event"]})
+      notify(item["source"]["screen_name"], {:title => item["event"]})
     end
 
     command :recent, :help => "show recent tweets" do
@@ -249,11 +249,16 @@ module Streamer
     end
 
     command :notify, :help => "add word to notify_filter (notify when tweet includes the word)" do |m|
-      notify_filters << m[1]
+      notify_filters << m[1] unless notify_filters.include?(m[1])
       ap notify_filters
     end
 
     command :notify_filters, :help => "show notify_filters" do
+      ap notify_filters
+    end
+
+    command :notify_delete, :help => "delete word in notify_filter (ex. ':notify_delete 3')" do |m|
+      notify_filters.delete_at(m[1].to_i)
       ap notify_filters
     end
   end
