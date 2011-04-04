@@ -25,7 +25,7 @@ module Streamer
           @stream.on_reconnect { |timeout, retries| puts "reconnecting in: #{timeout} seconds" }
           @stream.on_max_reconnects { |timeout, retries| notify "Failed after #{retries} failed reconnects" }
           puts_items twitter.home_timeline
-        rescue EventMachine::ConnectionError => e
+        rescue EventMachine::ConnectionError, Errno::ECONNREFUSED => e
           error e
         end
       }
@@ -40,7 +40,7 @@ module Streamer
       consumer = OAuth::Consumer.new(
         self.config[:consumer_key],
         self.config[:consumer_secret],
-        :site => 'https://api.twitter.com'
+        :site => 'https://api.twitter.com',
       )
       request_token = consumer.get_request_token
 
@@ -278,6 +278,7 @@ module Streamer
 
   extend Twitter
   argv << [:t, :twitter, "Add twitter stream"]
+  argv << [:p, :proxy, "specify proxy server", :optional => true]
 end
 
 
