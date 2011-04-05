@@ -31,7 +31,7 @@ twitter(-t, --twitter)
 hatena-bookmark(-b username, --bookmark=username)
   $ ./bin/streamer.rb -b r7kamura
 
-2ch(-c url, --channel=thread_url)
+2ch(-c thread_url, --channel=thread_url)
   $ ./bin/streamer.rb -c http://kamome.2ch.net/test/read.cgi/anime/1301907984/
 
 all
@@ -65,6 +65,6 @@ cho45さんのnet-ircからexamples/2ch.rbのThreadDataを利用させていた�
 
 
 ** 作者
-twitter => http://twitter.com/7kamura ---> 質問/要望はこちらにお願いします
+twitter => http://twitter.com/7kamura <--- 質問/要望はこちらにお願いします
 hatena  => http://d.hatena.ne.jp/r7kamura
 github  => http://github.com/r7kamura
