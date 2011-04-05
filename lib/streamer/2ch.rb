@@ -14,10 +14,12 @@ module Streamer
       text.gsub(/>>\d+/){|anchor| anchor.c(32)}
     end
 
-    def prettify_line(line, is_aa=false)
+    def prettify_line(line, is_aa=false, indent=0)
       text  = is_aa ? "AA(ry" : colorize_anchor(line[:body].gsub("\n", " "))
       text.gsub!(URI.regexp(["ttp", "http", "https"])) {|i| i.c(4).c(36) }
-      num   = line[:n].to_s
+      text  = "  " * indent + text
+      num   = "%-4s" % line[:n].to_s
+      num   = num.c(90) if indent > 0
       [
         Time.now.strftime("%H:%M"),
         obj2id(num).c(90),
@@ -34,7 +36,14 @@ module Streamer
       else
         begin
           @thread_data.retrieve.last(10).each do |line|
-            push_text(prettify_line(line, line.aa?))
+            tree = [line]
+            while tree.last[:body] =~ />>(\d+)/
+              res = @thread_data[$~[1].to_i] or break
+              tree << res
+            end
+            tree.each.with_index do |line, index|
+              push_text(prettify_line(line, line.aa?, index))
+            end
           end
         rescue Exception => e
           error e
