@@ -86,6 +86,7 @@ module Streamer
     @twitter = TwitterOAuth::Client.new(config.slice(:consumer_key, :consumer_secret, :token, :secret))
     get_access_token unless self.config[:token] && self.config[:secret]
     connect_twitter
+    notify_filters << twitter.info["screen_name"]
 
     output do |item|
       next if item["text"].nil?
