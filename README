@@ -35,7 +35,7 @@ hatena-bookmark(-b username, --bookmark=username)
   $ ./bin/streamer.rb -c http://kamome.2ch.net/test/read.cgi/anime/1301907984/
 
 all
-  $ ./bin/streamer.rb -t -b r7kamura -h http://kamome.2ch.net/test/read.cgi/anime/1301907984/
+  $ ./bin/streamer.rb -t -b r7kamura -c http://kamome.2ch.net/test/read.cgi/anime/1301907984/
 
 起動後は最近の数件を出力した後、更新がある度に画面に出力されていきます。
 :(コロン)で始まるコマンドが利用できます。
