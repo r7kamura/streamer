@@ -138,7 +138,9 @@ module Streamer
 
       text = result.join(" ")
       puts text
-      notify(item["source"]["screen_name"], {:title => item["event"]})
+      text_notify = item["source"]["screen_name"]
+      text_notify += (" => " + item["target_object"]["text"].u) if item["target_object"]
+      notify(text_notify, {:title => item["event"]})
     end
 
     command :recent, :help => "show recent tweets" do
