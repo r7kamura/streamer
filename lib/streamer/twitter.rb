@@ -163,11 +163,11 @@ module Streamer
       async_twitter { twitter.unfriend(m[1]) }
     end
 
-    command :user do |m|
+    command :user, :help => "show user's twitter-profile" do |m|
       ap twitter.show(m[1]).slice(*%w(id screen_name name profile_image_url description url location time_zone lang protected))
     end
 
-    command :search do |m|
+    command :search, :help => "search the word in twitter" do |m|
       puts_items twitter.search(m[1])["results"].each { |s|
         s["user"] = {"screen_name" => s["from_user"]}
         s["_disable_cache"] = true
@@ -183,22 +183,22 @@ module Streamer
       }
     end
 
-    command %r|^:retweet\s+(\d+)$|, :as => :retweet do |m|
+    command %r|^:retweet\s+(\d+)$|, :as => :retweet, :help => "official RT" do |m|
       target = twitter.status(m[1])
       if confirm("retweet 'RT @#{target["user"]["screen_name"]}: #{target["text"]}'")
         async_twitter { twitter.retweet(m[1]) }
       end
     end
 
-    command %r|^:retweet\s+(\d+)\s+(.*)$|, :as => :retweet do |m|
+    command %r|^:retweet\s+(\d+)\s+(.*)$|, :as => :retweet, :help => "unofficial RT" do |m|
       target = twitter.status(m[1])
-      text = "#{m[2]} RT @#{target["user"]["screen_name"]}: #{target["text"]} (#{target["id"]})"
+      text = "#{m[2]} RT @#{target["user"]["screen_name"]}: #{target["text"]}"
       if confirm("unofficial retweet '#{text}'")
         async_twitter { twitter.update(text) }
       end
     end
 
-    command %r|^:reply (\d+)\s+(.*)|, :as => :reply do |m|
+    command %r|^:reply (\d+)\s+(.*)|, :as => :reply, :help => "reply to the tweet" do |m|
       in_reply_to_status_id = m[1]
       target = twitter.status(in_reply_to_status_id)
       screen_name = target["user"]["screen_name"]
@@ -208,52 +208,56 @@ module Streamer
       end
     end
 
-    command :favorite do |m|
+    command :favorite, :help => "favorite the tweet" do |m|
       async_twitter { twitter.favorite(m[1]) }
     end
 
-    command :unfavorite do |m|
+    command :unfavorite, :help => "unfavorite the tweet" do |m|
       async_twitter { twitter.unfavorite(m[1]) }
     end
 
-    command :retweeted_by_me do
+    command :retweeted_by_me, :help => "show retweets by me" do
       puts_items twitter.retweeted_by_me
     end
 
-    command :retweeted_to_me do
+    command :retweeted_to_me, :help => "show retweets to me" do
       puts_items twitter.retweeted_to_me
     end
 
-    command :retweets_of_me do
+    command :retweets_of_me, :help => "show retweets of me" do
       puts_items twitter.retweets_of_me
     end
 
-    command :block do |m|
+    command :block, :help => "block the user" do |m|
       async_twitter { twitter.block(m[1]) }
     end
 
-    command :unblock do |m|
+    command :unblock, :help => "unblock the user" do |m|
       async_twitter { twitter.unblock(m[1]) }
     end
 
-    command :report_spam do |m|
+    command :report_spam, :help => "report the user as a spam user" do |m|
       async_twitter { twitter.report_spam(m[1]) }
     end
 
-    command :messages do
+    command :messages, :help => "show DMs" do
       puts_items twitter.messages.each { |s|
         s["user"] = {"screen_name" => s["sender_screen_name"]}
         s["_disable_cache"] = true
       }
     end
 
-    command :delete do |m|
+    command :delete, :help => "delete the tweet" do |m|
       tweet = twitter.status(m[1])
-      async_twitter { twitter.status_destroy(m[1]) } if confirm("delete '#{tweet["text"]}'")
+      async_twitter { twitter.status_destroy(m[1]); puts "Deleted!" } if confirm("delete '#{tweet["text"]}'")
     end
 
-    command %r|^:message (\w+)\s+(.*)|, :as => :message do |m|
+    command %r|^:message (\w+)\s+(.*)|, :as => :message, :help => "send DM (:message @hoge Hello!)" do |m|
       async_twitter { twitter.message(*m[1, 2]) } if confirm("message '#{m[2]}' to @#{m[1]}")
+    end
+
+    command %r|^:web (\w+)|, :as => :web, :help => "open the user's twitter-page (:web r7kamura)" do |m|
+      Launchy::Browser.run("http://twitter.com/#{m[1]}")
     end
 
     command :tree, :help => "show tweets tree by replies" do |m|

@@ -41,6 +41,8 @@ module Streamer
           else
             pattern = %r|^#{command_name}$|
           end
+        else
+          command_name = ":#{options[:as]}"
         end
         helps         << "%-20s %s" % [command_name, options[:help]] if options[:help] && command_name
         command_names << ":#{options[:as]}" if options[:as]
