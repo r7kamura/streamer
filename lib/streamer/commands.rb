@@ -2,7 +2,7 @@
 module Streamer
   # register default commands
   init do
-    command :exit, :help => "exit streamer" do
+    command :q, :help => "exit streamer" do
       stop
     end
 
