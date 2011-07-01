@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 
 $:.unshift(File.expand_path("../../lib", __FILE__)) if $0 == __FILE__
-require 'slop'
+require "rubygems"
+require "slop"
 require "streamer"
 
 opts = Slop.parse! :help => true do
